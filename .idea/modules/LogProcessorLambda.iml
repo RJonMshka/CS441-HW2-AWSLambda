@@ -13,8 +13,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="sbt: ch.qos.logback:logback-classic:1.3.0:jar" level="project" />
-    <orderEntry type="library" name="sbt: ch.qos.logback:logback-core:1.3.0:jar" level="project" />
     <orderEntry type="library" name="sbt: com.amazonaws:aws-java-sdk-core:1.12.90:jar" level="project" />
     <orderEntry type="library" name="sbt: com.amazonaws:aws-java-sdk-kms:1.12.90:jar" level="project" />
     <orderEntry type="library" name="sbt: com.amazonaws:aws-java-sdk-s3:1.12.90:jar" level="project" />
@@ -50,8 +48,6 @@
     <orderEntry type="library" scope="TEST" name="sbt: org.scalatest:scalatest-shouldmatchers_2.13:3.2.9:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: org.scalatest:scalatest-wordspec_2.13:3.2.9:jar" level="project" />
     <orderEntry type="library" scope="TEST" name="sbt: org.scalatest:scalatest_2.13:3.2.9:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.slf4j:slf4j-api:2.0.3:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.slf4j:slf4j-simple:2.0.3:jar" level="project" />
     <orderEntry type="library" name="sbt: software.amazon.ion:ion-java:1.0.2:jar" level="project" />
   </component>
 </module>

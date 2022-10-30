@@ -8,12 +8,21 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.mutable
 
+/**
+ * AWS connection utilities object
+ */
 object AwsUtils {
 
+  // config reference and s3 client object reference
   val s3Client: AmazonS3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_2).build()
   val s3Config: Config = ConfigFactory.load().getConfig("s3")
 
-  @throws[Throwable]
+  /**
+   * This method gets content of log data from S3 bucket and transforms the data into an Array
+   * @param logFile - path of file to read in S3 bucket
+   * @param logger - Lambda logger - writes to cloudwatch log groups
+   * @return Array[String] representing Array of each line of log file
+   */
   def getDataFromS3Bucket(logFile: String, logger: LambdaLogger): Array[String] = {
     try {
 
@@ -29,7 +38,11 @@ object AwsUtils {
     }
   }
 
-  @throws[Throwable]
+  /**
+   * This method gets the content hashtable text file and converts it into a map
+   * @param logger - lambda logger
+   * @return - a hashMap representing content of hashtable file
+   */
   def getHashtableFromS3(logger: LambdaLogger): mutable.Map[String, String] = {
     try {
       val hashTableFileObject: S3Object = s3Client.getObject(s3Config.getString("bucketName"), s3Config.getString("hashTableFilePath"))
