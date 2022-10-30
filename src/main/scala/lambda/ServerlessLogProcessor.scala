@@ -32,28 +32,28 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
 
     val responseEvent: APIGatewayProxyResponseEvent = new APIGatewayProxyResponseEvent
 
-    if(!TimeUtil.validateDateString(inputParams.get("date").get))
+    if(!TimeUtil.validateDateString(inputParams("date")))
         return responseEvent
           .withStatusCode(lambdaConfig.getInt("statusCodes.INTERNAL_SERVER_ERROR"))
           .withBody(lambdaConfig.getString("badResponses.invalidDate"))
 
 
-    if(!TimeUtil.validateTimeString(inputParams.get("time").get))
+    if(!TimeUtil.validateTimeString(inputParams("time")))
       return responseEvent
         .withStatusCode(lambdaConfig.getInt("statusCodes.INTERNAL_SERVER_ERROR"))
         .withBody(lambdaConfig.getString("badResponses.invalidTime"))
 
-    val logDate = inputParams.get("date").get
-    val logTime = inputParams.get("time").get
-    val interval = inputParams.get("interval").get.toInt
+    val logDate = inputParams("date")
+    val logTime = inputParams("time")
+    val interval = inputParams("interval").toInt
 
-    lambdaLogger.log(s"log time requested is ${logTime}")
+    lambdaLogger.log(s"log time requested is $logTime")
 
     val endTime = TimeUtil.getIntervalEndTime(logTime, interval)
 
     val hashTableData = AwsUtils.getHashtableFromS3(lambdaLogger)
 
-    val logFilesData = LogProcessingUtils.getLogFileNames(logDate, hashTableData, lambdaLogger)
+    val logFilesData = LogProcessingUtils.getLogFileNames(logDate, hashTableData)
 
     if(logFilesData == null) {
       lambdaLogger.log("date not matched with any data in the bucket")
@@ -62,7 +62,7 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
         .withBody(lambdaConfig.getString("badResponses.noFileFound"))
     }
 
-    val filteredLogFileData = logFilesData.filter(logFileDataTuple => LogProcessingUtils.checkInterval(logTime, endTime, logFileDataTuple, lambdaLogger))
+    val filteredLogFileData = logFilesData.filter(logFileDataTuple => LogProcessingUtils.checkInterval(logTime, endTime, logFileDataTuple))
 
     if(filteredLogFileData.isEmpty) {
       lambdaLogger.log("logs not found in range")
@@ -85,7 +85,7 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
         .withBody(lambdaConfig.getString("badResponses.noLogMessagesInRange"))
     }
 
-    lambdaLogger.log(s"range start index is: ${rangeStartIndex}")
+    lambdaLogger.log(s"range start index is: $rangeStartIndex")
 
     val rangeEndIndex = LogProcessingUtils.BinarySearchLogMessages(endTime, logData, rangeStartIndex, logData.length - 1)
 
@@ -96,12 +96,12 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
         .withBody(lambdaConfig.getString("badResponses.noLogMessagesInRange"))
     }
 
-    lambdaLogger.log(s"range end index is: ${rangeEndIndex}")
+    lambdaLogger.log(s"range end index is: $rangeEndIndex")
 
     val intervalLogData = logData.slice(rangeStartIndex, rangeEndIndex)
 
     val filteredLogData = intervalLogData.filter(
-      (logMessage) => {
+      logMessage => {
         val logMessageMatcher = logMessagePattern.matcher(logMessage)
         logMessageMatcher.matches
         val stringMessagePatternMatcher =  stringMessagePattern.matcher(logMessageMatcher.group(5))

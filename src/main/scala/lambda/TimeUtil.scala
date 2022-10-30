@@ -10,9 +10,9 @@ object TimeUtil {
   // format to match the log message time
   val config: Config = ConfigFactory.load().getConfig("lambda")
   val logTimeFormatter: SimpleDateFormat = new SimpleDateFormat(config.getString("logTimeFormatter"))
-  val datePattern = Pattern.compile(config.getString("datePattern"))
-  val timePattern = Pattern.compile(config.getString("timePattern"))
-  val defaultDate = config.getString("defaultDate")
+  val datePattern: Pattern = Pattern.compile(config.getString("datePattern"))
+  val timePattern: Pattern = Pattern.compile(config.getString("timePattern"))
+  val defaultDate: String = config.getString("defaultDate")
   val millisecondsInSecond = 1000
 
   def getInterval(s1: String, s2: String): Long = logTimeFormatter.parse(s2).getTime - logTimeFormatter.parse(s1).getTime

@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 class LambdaTest extends AnyFunSpec {
 
-  val dummyLogger = new LambdaLogger {
+  val dummyLogger: LambdaLogger = new LambdaLogger {
     override def log(message: String): Unit = ()
     override def log(message: Array[Byte]): Unit = ()
   }
@@ -81,7 +81,7 @@ class LambdaTest extends AnyFunSpec {
 
         val data = ("14:00:00.000", "15:00:00.000", "logFileName")
 
-        LogProcessingUtils.checkInterval(startTime, endTime, data, dummyLogger) shouldBe true
+        LogProcessingUtils.checkInterval(startTime, endTime, data) shouldBe true
       }
 
       it("should check interval in invalid data") {
@@ -90,7 +90,7 @@ class LambdaTest extends AnyFunSpec {
 
         val data = ("14:00:00.000", "14:20:00.000", "logFileName")
 
-        LogProcessingUtils.checkInterval(startTime, endTime, data, dummyLogger) shouldBe false
+        LogProcessingUtils.checkInterval(startTime, endTime, data) shouldBe false
       }
 
       it("should calculate closest log message index based on timestamp by Binary Search") {
@@ -137,7 +137,7 @@ class LambdaTest extends AnyFunSpec {
         testHashMap.put("2022-10-28","14:27:22.436|14:27:37.189|log/LogFileGenerator.2022-10-28.0.log,14:27:37.234|14:27:40.031|log/LogFileGenerator.2022-10-28.1.log,")
 
         val dateToTest = "2022-10-29"
-        val result = LogProcessingUtils.getLogFileNames(dateToTest, testHashMap, dummyLogger)
+        val result = LogProcessingUtils.getLogFileNames(dateToTest, testHashMap)
 
         result(0)._1 shouldBe "15:10:24.643"
         result(0)._2 shouldBe "15:10:38.792"
@@ -155,7 +155,7 @@ class LambdaTest extends AnyFunSpec {
         testHashMap.put("2022-10-28","14:27:22.436|14:27:37.189|log/LogFileGenerator.2022-10-28.0.log,14:27:37.234|14:27:40.031|log/LogFileGenerator.2022-10-28.1.log,")
 
         val dateToTest = "2022-10-30"
-        val result = LogProcessingUtils.getLogFileNames(dateToTest, testHashMap, dummyLogger)
+        val result = LogProcessingUtils.getLogFileNames(dateToTest, testHashMap)
 
         result shouldBe null
       }

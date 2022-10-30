@@ -1,8 +1,6 @@
 package lambda
 
-import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.typesafe.config.{Config, ConfigFactory}
-import sun.security.provider.MD5
 
 import java.security.MessageDigest
 import java.util.regex.Pattern
@@ -12,9 +10,9 @@ import scala.collection.mutable
 object LogProcessingUtils {
 
   val config: Config = ConfigFactory.load().getConfig("lambda")
-  val logMessagePattern = Pattern.compile(config.getString("logMessagePattern"))
+  val logMessagePattern: Pattern = Pattern.compile(config.getString("logMessagePattern"))
 
-  def checkInterval(start: String, end: String, data: (String, String, String), logger: LambdaLogger): Boolean = {
+  def checkInterval(start: String, end: String, data: (String, String, String)): Boolean = {
     val firstLogTime = data._1
     val lastLogTime = data._2
     TimeUtil.getInterval(firstLogTime, start) >= 0 && TimeUtil.getInterval(end, lastLogTime) >= 0
@@ -74,9 +72,9 @@ object LogProcessingUtils {
     logFileData.split(config.getString("sameDateFilesDataDelimiter"))
   }
 
-  def getLogFileNames(date: String, hashFileData: mutable.Map[String, String], logger: LambdaLogger): Array[(String, String, String)] = {
+  def getLogFileNames(date: String, hashFileData: mutable.Map[String, String]): Array[(String, String, String)] = {
     if(hashFileData.contains(date)) {
-      val logFileData = hashFileData.get(date).get
+      val logFileData = hashFileData(date)
       getHTEntries(logFileData).map(getTimeAndFileNameFromHTEntry)
     } else {
       null

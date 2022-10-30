@@ -21,7 +21,7 @@ object AwsUtils {
       val logFileContent = logFileObject.getObjectContent
 
       val data = scala.io.Source.fromInputStream(logFileContent).getLines().toArray
-      logFileContent.close
+      logFileContent.close()
       data
     } catch {
       case e: Throwable => logger.log(s"Error found while accessing logs is: ${e.getMessage}")
@@ -39,7 +39,7 @@ object AwsUtils {
         val lineSplit = line.split(s3Config.getString("hashTableKeyValueSeparator"))
         hashTable.put(lineSplit(0), lineSplit(1))
       })
-      fileContent.close
+      fileContent.close()
       hashTable
     } catch {
       case e: Throwable => logger.log(s"Error found while accessing hashtable file is: ${e.getMessage}")
