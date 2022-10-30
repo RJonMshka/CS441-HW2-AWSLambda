@@ -7,23 +7,20 @@ lazy val root = (project in file("."))
     name := "LogProcessorLambda"
   )
 
-val logbackVersion = "1.3.0"
-val sfl4sVersion = "2.0.3"
 val typesafeConfigVersion = "1.4.2"
 val scalacticVersion = "3.2.9"
+val awsSdkS3Version = "1.12.90"
+val awsLambdaJavaCoreVersion = "1.2.1"
+val awsLambdaJavaEventsVersion = "3.11.0"
 
 libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-core" % logbackVersion,
-  "ch.qos.logback" % "logback-classic" % logbackVersion,
-  "org.slf4j" % "slf4j-api" % sfl4sVersion,
-  "org.slf4j" % "slf4j-simple" % sfl4sVersion,
   "com.typesafe" % "config" % typesafeConfigVersion,
   "org.scalactic" %% "scalactic" % scalacticVersion,
   "org.scalatest" %% "scalatest" % scalacticVersion % Test,
   "org.scalatest" %% "scalatest-featurespec" % scalacticVersion % Test,
-  "com.amazonaws" % "aws-java-sdk-s3" % "1.12.90",
-  "com.amazonaws" % "aws-lambda-java-core" % "1.2.1",
-  "com.amazonaws" % "aws-lambda-java-events" % "3.11.0"
+  "com.amazonaws" % "aws-java-sdk-s3" % awsSdkS3Version,
+  "com.amazonaws" % "aws-lambda-java-core" % awsLambdaJavaCoreVersion,
+  "com.amazonaws" % "aws-lambda-java-events" % awsLambdaJavaEventsVersion
 )
 
 assemblyMergeStrategy in assembly := {

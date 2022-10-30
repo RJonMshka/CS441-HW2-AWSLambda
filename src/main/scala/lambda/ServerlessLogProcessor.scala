@@ -1,19 +1,31 @@
 package lambda
 
 
+import HelperUtils.ObtainConfigReference
+
 import scala.jdk.CollectionConverters._
 import java.util.regex.Pattern
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent}
+import com.typesafe.config.Config
 
 class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent]{
-  val logMessagePattern = Pattern.compile("(.+)\\s\\[(.+)\\]\\s+(WARN|ERROR|DEBUG|INFO)\\s+(.+)\\s+-\\s+(.+)\\s*")
-  val stringMessagePattern = Pattern.compile("(.*)([a-c][e-g][0-3]|[A-Z][5-9][f-w]){5,15}(.*)")
 
   override def handleRequest(input: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
-
     val lambdaLogger = context.getLogger
     lambdaLogger.log("Lambda function running")
+
+    lambdaLogger.log("loading configurations")
+
+    val lambdaConfigReference: Config = ObtainConfigReference("lambda", lambdaLogger) match {
+      case Some(value) => value
+      case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
+    }
+
+    val lambdaConfig: Config = lambdaConfigReference.getConfig("lambda")
+
+    val logMessagePattern = Pattern.compile(lambdaConfig.getString("logMessagePattern"))
+    val stringMessagePattern = Pattern.compile(lambdaConfig.getString("stringMessagePattern"))
 
 
     val inputParams = input.getQueryStringParameters.asScala
@@ -21,11 +33,15 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
     val responseEvent: APIGatewayProxyResponseEvent = new APIGatewayProxyResponseEvent
 
     if(!TimeUtil.validateDateString(inputParams.get("date").get))
-        responseEvent.withStatusCode(500).withBody("Invalid Date String")
+        return responseEvent
+          .withStatusCode(lambdaConfig.getInt("statusCodes.INTERNAL_SERVER_ERROR"))
+          .withBody(lambdaConfig.getString("badResponses.invalidDate"))
 
 
     if(!TimeUtil.validateTimeString(inputParams.get("time").get))
-      responseEvent.withStatusCode(500).withBody("Invalid Time String")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.INTERNAL_SERVER_ERROR"))
+        .withBody(lambdaConfig.getString("badResponses.invalidTime"))
 
     val logDate = inputParams.get("date").get
     val logTime = inputParams.get("time").get
@@ -41,14 +57,18 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
 
     if(logFilesData == null) {
       lambdaLogger.log("date not matched with any data in the bucket")
-      return responseEvent.withStatusCode(404).withBody("Log Messages for this particular date are not available")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.NOT_FOUND"))
+        .withBody(lambdaConfig.getString("badResponses.noFileFound"))
     }
 
     val filteredLogFileData = logFilesData.filter(logFileDataTuple => LogProcessingUtils.checkInterval(logTime, endTime, logFileDataTuple, lambdaLogger))
 
     if(filteredLogFileData.isEmpty) {
       lambdaLogger.log("logs not found in range")
-      return responseEvent.withStatusCode(404).withBody("Log Messages are not available in the given interval")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.NOT_FOUND"))
+        .withBody(lambdaConfig.getString("badResponses.noLogMessagesInRange"))
     }
 
     val logFileToLoad = filteredLogFileData(0)._3
@@ -60,7 +80,9 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
 
     if(rangeStartIndex == Int.MaxValue) {
       lambdaLogger.log("start of range not found")
-      return responseEvent.withStatusCode(404).withBody("Log Messages are not available in the given interval")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.NOT_FOUND"))
+        .withBody(lambdaConfig.getString("badResponses.noLogMessagesInRange"))
     }
 
     lambdaLogger.log(s"range start index is: ${rangeStartIndex}")
@@ -69,7 +91,9 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
 
     if(rangeEndIndex == Int.MaxValue) {
       lambdaLogger.log("end of range not found")
-      return responseEvent.withStatusCode(404).withBody("Log Messages are not available in the given interval")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.NOT_FOUND"))
+        .withBody(lambdaConfig.getString("badResponses.noLogMessagesInRange"))
     }
 
     lambdaLogger.log(s"range end index is: ${rangeEndIndex}")
@@ -85,11 +109,20 @@ class ServerlessLogProcessor extends RequestHandler[APIGatewayProxyRequestEvent,
       }
     )
 
+    if(filteredLogData.isEmpty) {
+      lambdaLogger.log("no log message matched the string pattern")
+      return responseEvent
+        .withStatusCode(lambdaConfig.getInt("statusCodes.NOT_FOUND"))
+        .withBody(lambdaConfig.getString("badResponses.noPatternMatch"))
+    }
+
     val filteredLogDataString = filteredLogData.mkString("\n")
 
     val hashedData = LogProcessingUtils.md5Hashing(filteredLogDataString)
 
-    return responseEvent.withStatusCode(200).withBody(hashedData)
+    responseEvent
+      .withStatusCode(lambdaConfig.getInt("statusCodes.OK"))
+      .withBody(hashedData)
 
   }
 
